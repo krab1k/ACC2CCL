@@ -1,0 +1,54 @@
+{% extends 'base/base.html' %}
+
+{% block body %}
+    <div class="container p-3">
+        <form method=post enctype=multipart/form-data id="input_files">
+            <div class="row">
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="input-type" id="example-water"
+                               value="example-water" checked>
+                        <label class="form-check-label" for="example-water">
+                            Water molecule
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="input-type" id="example-phenols"
+                               value="example-phenols">
+                        <label class="form-check-label" for="example-phenols">
+                            Set of phenolic drugs
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="input-type" id="user-input"
+                               value="user-input">
+                        <label class="form-check-label" for="user-input">
+                            Upload own molecule
+                        </label>
+                        <input type="file">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button class="btn btn-primary" type="button" id="calculate">Calculate</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+{% endblock body %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='jquery/jquery-3.4.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+{% endblock scripts %}

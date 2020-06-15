@@ -1,0 +1,52 @@
+{% extends 'base/base.html' %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.css') }}">
+{% endblock styles %}
+
+{% block body %}
+    <div class="container p-3">
+        <form method=post enctype=multipart/form-data id="ccl_code">
+            <div class="row">
+                <div class="col-12 form-group">
+                    <label for="methods"> Preload example</label>
+                    <select id="methods" class="custom-select">
+                        <option value="">-- select one --</option>
+                        {% for method in methods %}
+                            <option value="{{ method }}"> {{ method }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <label for="code">Code in CCL</label>
+                    <textarea rows="10" cols="80" form="ccl_code" id="code" name="code"></textarea>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div id="output"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <button class="btn btn-secondary" type="button" id="generate_pdf" disabled>Generate PDF</button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-primary" type="button" id="compile" disabled>Compile</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+{% endblock body %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='jquery/jquery-3.4.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='codemirror/codemirror.js') }}"></script>
+    <script src="{{ url_for('static', filename='codemirror/simple.js') }}"></script>
+    <script src="{{ url_for('static', filename='codemirror/ccl.js') }}"></script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+{% endblock scripts %}
