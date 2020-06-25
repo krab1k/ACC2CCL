@@ -6,7 +6,19 @@
 
 {% block body %}
     <div class="container p-3">
-        <form method=post enctype=multipart/form-data id="ccl_code">
+        <form method=post action="/compile" enctype=multipart/form-data id="ccl_code">
+            <div class="row">
+                <div class="col">
+                    <h1 style="margin-bottom: 30px" class="font-weight-bold">Atomic Charge Calculator
+                        <span style="color: #28a745">II</span> + CCL</h1>
+                    <p><span class="font-weight-bold">Atomic Charge Calculator <span
+                            style="color: #28a745">II</span> + CCL</span>
+                        (ACC II + CCL) is an extension to original <a href="https://acc2.ncbr.muni.cz" target="_blank"
+                                                                      rel="noreferrer">ACC II</a> allowing to specify a
+                        charge calculation method in a simple domain specific language - CCL.
+                </div>
+            </div>
+            <hr>
             <div class="row">
                 <div class="col-12 form-group">
                     <label for="methods"> Preload example</label>
@@ -31,14 +43,21 @@
             </div>
             <div class="row">
                 <div class="col-6">
-                    <button class="btn btn-secondary" type="button" id="generate_pdf" disabled>Generate PDF</button>
+                    <button class="btn btn-secondary" type="button" id="generate_pdf">Generate PDF</button>
                 </div>
                 <div class="col-6">
-                    <button class="btn btn-primary" type="button" id="compile" disabled>Compile</button>
+                    <button class="btn btn-primary" type="submit" id="compile">Compile</button>
                 </div>
             </div>
         </form>
+
+        <hr>
+        {% include 'base/elixir.html' %}
+        <hr>
+        {% include 'base/footer.html' %}
     </div>
+
+
 
 {% endblock body %}
 

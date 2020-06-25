@@ -1,10 +1,13 @@
-from flask import request, render_template, send_from_directory
+from flask import request, render_template, send_from_directory, redirect, url_for, flash
 import os
 from ccl.translate import translate
 from ccl.errors import CCLCodeError
 import tempfile
 import subprocess
 import uuid
+
+from .files import prepare_file
+
 
 from . import application, EXAMPLES_DIR, CHARGEFW2_DIR
 
@@ -48,16 +51,17 @@ def generate_pdf():
     try:
         output = translate(code, 'latex', full_output=True)
     except CCLCodeError as e:
-        output = f'Error in CCL code: {e}'
+        return {'status': 'failed', 'errorMessage': f'Code check failed: {e.message}'}
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_file = os.path.join(tmpdir, 'method.tex')
         with open(tex_file, 'w') as f:
             f.write(output)
 
-        ret = subprocess.run(['xelatex', tex_file], stderr=subprocess.PIPE, stdout=subprocess.PIPE, cwd=tmpdir)
-        if ret.returncode:
-            return ret.stdout
+        p = subprocess.run(['xelatex', tex_file], stderr=subprocess.PIPE, cwd=tmpdir)
+        if p.returncode:
+            print(p.stderr)
+            return {'status': 'failed', 'errorMessage': f'LaTeX compilation failed'}
 
         return send_from_directory(tmpdir, 'method.pdf', mimetype='application/pdf', cache_timeout=0,
                                    as_attachment=True)
@@ -65,7 +69,7 @@ def generate_pdf():
 
 @application.route('/compile', methods=['POST'])
 def compile_method():
-    code = request.data.strip().decode('utf-8') + '\n'
+    code = request.form['code'] + '\n'
 
     comp_id = str(uuid.uuid1())
     tmpdir = tempfile.mkdtemp()
@@ -87,15 +91,28 @@ def compile_method():
         print(p.stderr)
         return {'status': 'failed', 'errorMessage': 'Compilation failed'}
 
-    p = subprocess.run(['/opt/chargefw2/bin/chargefw2', '--mode', 'info', '--input-file',
-                        '/home/krab1k/krab1k/Research/test_data/water.sdf'], cwd=tmpdir, stderr=subprocess.PIPE)
-    if p.returncode:
-        print(p.stderr)
+    # p = subprocess.run(['/opt/chargefw2/bin/chargefw2', '--mode', 'info', '--input-file',
+    #                     '/home/krab1k/krab1k/Research/test_data/water.sdf'], cwd=tmpdir, stderr=subprocess.PIPE)
+    # if p.returncode:
+    #    print(p.stderr)
     #    return {'status': 'failed', 'errorMessage': 'Calculation failed'}
+    return redirect(url_for('get_input', r=comp_id))
 
-    return {'status': 'ok', 'compId': comp_id}
 
-
-@application.route('/input')
+@application.route('/input', methods=['GET', 'POST'])
 def get_input():
+    if request.method == 'POST':
+        tmp_dir = tempfile.mkdtemp(prefix='compute_')
+        os.mkdir(os.path.join(tmp_dir, 'input'))
+        os.mkdir(os.path.join(tmp_dir, 'output'))
+        os.mkdir(os.path.join(tmp_dir, 'logs'))
+
+        if request.form['input-type'] == 'user-input':
+            if not prepare_file(request, tmp_dir):
+                flash('Invalid file provided. Supported types are common chemical formats: sdf, mol2, pdb, cif'
+                      ' and zip or tar.gz of those.', 'error')
+                return render_template('index.html')
+        print(request.form)
+        print(request.files)
+
     return render_template('input.html')

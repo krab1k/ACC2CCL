@@ -1,5 +1,9 @@
 'use strict';
 
+const spinner = '<span class="spinner-border spinner-border-sm" role="status" ' +
+                  'aria-hidden="true" style="animation-duration: 1.5s"></span>';
+
+
 function check_code(editor) {
     $.ajax({
         type: 'POST',
@@ -46,15 +50,22 @@ function throttle(func, milliseconds) {
     };
 }
 
+const default_ccl_code = 'name zero\nq = 0'
+
 
 function init_index() {
     let editor = CodeMirror.fromTextArea(document.getElementById('code'), {
         'lineNumbers': true,
     });
+
+    editor.setValue(default_ccl_code);
+
     editor.on('change', throttle(function () {
         check_code(editor);
         $("#methods").prop('selectedIndex', '0');
     }, 10));
+
+    let $output = $('#output');
 
     let $generate_pdf = $('#generate_pdf');
     $generate_pdf.on('click', function () {
@@ -64,6 +75,13 @@ function init_index() {
         req.open('POST', '/generate-pdf', true);
         req.responseType = 'arraybuffer';
         req.onload = function () {
+            /* Recover json from arraybuffer on error */
+            if (req.getResponseHeader('content-type') === 'application/json') {
+                const decodedString = String.fromCharCode.apply(null, new Uint8Array(req.response));
+                const req_json = JSON.parse(decodedString);
+                $output.text(req_json['errorMessage']);
+                return;
+            }
             let arrayBuffer = req.response;
             $generate_pdf.attr('disabled', false);
 
@@ -94,34 +112,22 @@ function init_index() {
                     editor.setValue(result['source']);
                 } else {
                     editor.setValue('');
-                    $('#output').text(result['errorMessage']);
+                    $output.text(result['errorMessage']);
                 }
             }
         })
     })
 
     let $compile = $('#compile');
-    $compile.on('click', function () {
-        $.ajax({
-            url: 'compile',
-            data: editor.getValue(),
-            type: 'POST',
-            contentType: 'text/plain;charset=UTF-8',
-            success: function (result) {
-                if (result['status'] === 'ok') {
-                    $('#output').text('OK');
-                    window.location.replace('/input');
-                } else {
-                    $('#output').text(result['errorMessage']);
-                }
-            }
-        })
+    $compile.on('click', function (e) {
+        $compile.html(`${spinner} Compiling...`);
+        $('form').submit();
     })
 }
 
 
 function init_input() {
-
+    console.log('Got here');
 }
 
 
