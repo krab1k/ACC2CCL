@@ -1,28 +1,28 @@
 from flask import request, render_template, send_from_directory, redirect, url_for, flash
 import os
-from ccl.translate import translate
+from ccl import CCLMethod
 from ccl.errors import CCLCodeError
 import tempfile
 import subprocess
 import uuid
 
-from .files import prepare_file
+from .files import prepare_file, prepare_example
 
 
-from . import application, EXAMPLES_DIR, CHARGEFW2_DIR
+from . import application, CCL_EXAMPLES_DIR, CHARGEFW2_DIR
 
 computations = {}
 
 
 def get_examples():
-    return [os.path.splitext(file)[0] for file in os.listdir(EXAMPLES_DIR)]
+    return [os.path.splitext(file)[0] for file in os.listdir(CCL_EXAMPLES_DIR)]
 
 
 @application.route('/get-example', methods=['POST'])
 def get_example():
     method = request.data.strip().decode('UTF-8')
     try:
-        with open(os.path.join(EXAMPLES_DIR, f'{method}.ccl')) as f:
+        with open(os.path.join(CCL_EXAMPLES_DIR, f'{method}.ccl')) as f:
             source = f.read()
     except IOError:
         return {'status': 'failed', 'errorMessage': 'Incorrect example'}
@@ -39,7 +39,7 @@ def index():
 def check():
     code = request.data.strip().decode('utf-8') + '\n'
     try:
-        translate(code, 'latex')
+        CCLMethod(code)
         return {'status': 'ok'}
     except CCLCodeError as e:
         return {'status': 'failed', 'lineNumber': e.line, 'errorMessage': e.message}
@@ -49,7 +49,7 @@ def check():
 def generate_pdf():
     code = request.data.strip().decode('utf-8') + '\n'
     try:
-        output = translate(code, 'latex', full_output=True)
+        output = CCLMethod(code).translate('latex', full_output=True)
     except CCLCodeError as e:
         return {'status': 'failed', 'errorMessage': f'Code check failed: {e.message}'}
 
@@ -76,7 +76,7 @@ def compile_method():
 
     computations[comp_id] = {'dir': tmpdir}
     try:
-        translate(code, 'cpp', output_dir=tmpdir)
+        CCLMethod(code).translate('cpp', output_dir=tmpdir)
     except CCLCodeError as e:
         return {'status': 'failed', 'errorMessage': f'Code check failed: {e.message}'}
 
@@ -107,12 +107,15 @@ def get_input():
         os.mkdir(os.path.join(tmp_dir, 'output'))
         os.mkdir(os.path.join(tmp_dir, 'logs'))
 
-        if request.form['input-type'] == 'user-input':
+        if request.form['type'] == 'user-input':
             if not prepare_file(request, tmp_dir):
                 flash('Invalid file provided. Supported types are common chemical formats: sdf, mol2, pdb, cif'
                       ' and zip or tar.gz of those.', 'error')
                 return render_template('index.html')
-        print(request.form)
-        print(request.files)
+
+        elif request.form['type'] == 'example':
+            prepare_example(request, tmp_dir)
+        else:
+            raise RuntimeError('Bad type of input')
 
     return render_template('input.html')

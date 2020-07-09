@@ -126,8 +126,51 @@ function init_index() {
 }
 
 
+function disable_buttons() {
+    const $buttons = $('.btn');
+    $buttons.each(function () {
+        $(this).prop('disabled', true);
+    });
+}
+
+
 function init_input() {
-    console.log('Got here');
+     /* Allow submit only if file is selected */
+    const $input = $('#file_input');
+    const $charges = $('#charges');
+    const $examples = $('button[name^="example"]');
+
+    $charges.prop('disabled', true);
+
+    $input.on('change', function () {
+        if ($input.val()) {
+            $charges.prop('disabled', false);
+        } else {
+            $charges.prop('disabled', true);
+        }
+    });
+
+    $examples.on('click', function () {
+        disable_buttons();
+        $(this).html(`${spinner} Computing...`);
+        $('#example-name').val($(this).prop('name'));
+        $('form').submit();
+    });
+
+    $charges.on('click', function (e) {
+        if ($input[0].files[0].size > 10 * 1024 * 1024) {
+            alert('Cannot upload file larger than 10 MB');
+            e.preventDefault();
+        } else {
+            disable_buttons();
+            $charges.html(`${spinner} Computing...`);
+            $('#type').val('charges');
+            $('form').submit();
+        }
+    });
+
+    /* Fix disabled buttons when user press Back button in browser (at least in Chrome) */
+    $input.trigger('change');
 }
 
 

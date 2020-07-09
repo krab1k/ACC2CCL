@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 import shutil
 from typing import Dict, IO
 
-
+from . import EXAMPLES_DIR
 from .parser import parse_cif_from_string
 
 ALLOWED_INPUT_EXTENSION = {'.sdf', '.mol2', '.pdb', '.cif'}
@@ -63,3 +63,18 @@ def prepare_file(rq, tmp_dir):
         subprocess.run(args)
 
     return success
+
+
+def prepare_example(rq, tmp_dir):
+    print(rq.form['example-name'])
+    if 'example-receptor' == rq.form['example-name']:
+        filename = 'receptor.pdb'
+    elif 'example-phenols' == rq.form['example-name']:
+        filename = 'phenols.sdf'
+    elif 'example-bax-inactive' == rq.form['example-name']:
+        filename = '1f16_updated.cif'
+    elif 'example-bax-activated' == rq.form['example-name']:
+        filename = '2k7w_updated.cif'
+    else:
+        raise RuntimeError('Unknown example selected')
+    shutil.copy(os.path.join(EXAMPLES_DIR, filename), os.path.join(tmp_dir, 'input', filename))
